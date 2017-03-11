@@ -22,7 +22,6 @@ Quickstart
 - You need at least 4GB of memory to run Graylog
 - Here is an example of a playbook targeting Vagrant box(es):
 
-    ---
     - hosts: all
       remote_user: vagrant
       become: True
@@ -95,8 +94,6 @@ More detailed example
 - Install role's dependencies `ansible-galaxy install -r roles/Graylog2.graylog-ansible-role/requirements.yml`
 - Set up playbook (see example below):
 
-    # your_playbook.yml
-    ---
     - hosts: server
       become: True
       vars:
@@ -159,7 +156,6 @@ Openjdk doesn't have problems to use a proxy for apt, also doesn't requires the 
 
 Example:
 
-    ---
     - name: Add java-jdk-8 ppa for Ubuntu trusty
       hosts: graylog2_servers
       become: True
@@ -195,7 +191,6 @@ Is good to be explicit, these are all the roles that you need to run for graylog
 
 Note: in this example vars are in a more appropiate place at `group_vars/group/vars`
 
-    ---
     - name: Apply roles for graylog2 servers
       hosts: graylog2_servers
       become: True
