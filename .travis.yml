@@ -3,6 +3,8 @@ branches:
   only:
     - master
 
+sudo: required
+
 services:
   - docker
 
@@ -15,16 +17,16 @@ env:
     run_opts: '-it --privileged -v $PWD:/role:ro -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d'
   - distro: wheezy_21
     init: ""
-    run_opts: '-it -v $PWD:/role'
+    run_opts: '-it -v $PWD:/role -d'
   - distro: wheezy_22
     init: ""
-    run_opts: '-it -v $PWD:/role'
+    run_opts: '-it -v $PWD:/role -d'
   - distro: trusty_21
     init: ""
-    run_opts: '-it -v $PWD:/role'
+    run_opts: '-it -v $PWD:/role -d'
   - distro: trusty_22
     init: ""
-    run_opts: '-it -v $PWD:/role'
+    run_opts: '-it -v $PWD:/role -d'
   - distro: xenial_21
     init: /sbin/init
     run_opts: '-it --privileged -v $PWD:/role:ro -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d'
