@@ -36,7 +36,6 @@ before_script:
   - >
     docker build -t graylog-ansible-role-${distro}
     -f tests/support/${distro}.Dockerfile tests/support
-  - docker images
 
 script:
   - >
@@ -47,4 +46,3 @@ script:
   - >
     docker exec -it $DOCKER_CONTAINER_ID
     /bin/bash -xec "bash -x run-tests.sh"
-  - docker ps -a
