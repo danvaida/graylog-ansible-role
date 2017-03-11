@@ -43,7 +43,7 @@ script:
     docker run -d -it -v $PWD:/role:ro
     ${run_opts} --name ${distro}
     graylog-ansible-role-${distro} ${init}
-  - DOCKER_CONTAINER_ID=$(docker ps --filter name=${distro})
+  - DOCKER_CONTAINER_ID=$(docker ps --filter name=${distro} -q)
   - >
     docker exec -it $DOCKER_CONTAINER_ID
     /bin/bash -xec "bash -x run-tests.sh"
