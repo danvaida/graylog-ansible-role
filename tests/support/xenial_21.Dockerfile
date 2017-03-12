@@ -15,7 +15,8 @@ RUN apt-get -y install ca-certificates \
                        python-pip \
                        python-dev \
                        libffi-dev \
-                       libssl-dev
+                       libssl-dev \
+                       systemd
 RUN pip install setuptools \
                 ansible==2.1.2
 
