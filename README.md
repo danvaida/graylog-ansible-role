@@ -8,26 +8,19 @@ Ansible role which installs and configures Graylog log management.
 Dependencies
 ------------
 
-- **Ansible versions > 2.1.2 or > 2.2.1 are supported.**
 - [MongoDB][1] - use master branch for compatibility with Ansible 2.2 see [issue 5][2]
 - [Elasticsearch][3] - use version 0.2 to ensure compatibility with 2.x. Graylog doesn't support Elasticsearch 5.x yet
 - [NGINX][4]
-- Tested on Ubuntu 14.04, 16.04 / Debian 7 / Centos 7
-
-See the `requirements.yml` file for a compatible configuration for Ansible 2.1 and 2.2.
 
 Quickstart
 ----------
 
-- You need at least 4GB of memory to run Graylog
 - Here is an example of a playbook targeting Vagrant box(es):
 ```yaml
 - hosts: all
   remote_user: vagrant
   become: True
   vars:
-    # Graylog2 is not compatible with elasticsearch 5.x, so ensure to use 2.x (graylog3 will be compatible)
-    # Also use version 0.2 of elastic.elasticsearch (ansible role), because vars are different
     es_major_version: "2.x"
     es_version: "2.4.3"
     es_instance_name: 'graylog'
@@ -101,8 +94,6 @@ More detailed example
 - hosts: server
   become: True
   vars:
-    # Graylog2 is not compatible with elasticsearch 5.x, so ensure to use 2.x (graylog3 will be compatible)
-    # Also use version 0.2 of elastic.elasticsearch (ansible role), because vars are different
     es_major_version: "2.x"
     es_version: "2.4.3"
     es_instance_name: 'graylog'
@@ -253,11 +244,30 @@ Tests
 One can test the role on the supported distributions (see `meta/main.yml` for the complete list),
 by using the Docker images provided.
 
-Example for Debian Wheezy and Ubuntu Trusty:
+Example for Debian Wheezy, Stretch and Ubuntu Trusty:
 
     $ cd graylog-ansible-role
-    $ docker build -t graylog-ansible-role-wheezy -f tests/support/wheezy.Dockerfile tests/support
-    $ docker run -it -v $PWD:/role graylog-ansible-role-wheezy
+    $ docker build \
+        --tag graylog-ansible-role-wheezy \
+        --file tests/support/wheezy.Dockerfile \
+        tests/support
+    $ docker run \
+        --rm \
+        --detach \
+        --interactive \
+        --tty \
+        --volume $PWD:/role \
+        --name wheezy \
+        graylog-ansible-role-wheezy
+    $ DOCKER_CONTAINER_ID=$(docker ps --filter name=wheezy -q)
+    $ docker logs $DOCKER_CONTAINER_ID
+    $ docker exec \
+        --interactive \
+        --tty \
+        $DOCKER_CONTAINER_ID \
+        /bin/bash -xec "bash -x run-tests.sh"
+    $ docker ps -a
+    $ docker stop $DOCKER_CONTAINER_ID
 
 For Trusty, just replace `wheezy` with `trusty` in the above commands.
 
@@ -266,23 +276,56 @@ Example for CentOS 7 and Ubuntu Xenial:
 Due to how `systemd` works with Docker, the following approach is suggested:
 
     $ cd graylog-ansible-role
-    $ docker build -t graylog-ansible-role-centos7 -f tests/support/centos7.Dockerfile tests/support
-    $ docker run -d --privileged -it -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v $PWD:/role:ro graylog-ansible-role-centos7 /usr/sbin/init
-    $ DOCKER_CONTAINER_ID=$(docker ps | grep centos | awk '{print $1}')
+    $ docker build \
+        --tag graylog-ansible-role-centos7 \
+        --file tests/support/centos7.Dockerfile \
+        tests/support
+    $ docker run \
+        --rm \
+        --detach \
+        --privileged \
+        --interactive \
+        --tty \
+        --volume /sys/fs/cgroup:/sys/fs/cgroup:ro \
+        --volume $PWD:/role:ro \
+        --name centos \
+        graylog-ansible-role-centos7 \
+        /usr/sbin/init
+    $ DOCKER_CONTAINER_ID=$(docker ps --filter name=centos -q)
     $ docker logs $DOCKER_CONTAINER_ID
-    $ docker exec -it $DOCKER_CONTAINER_ID /bin/bash -xec "bash -x run-tests.sh"
+    $ docker exec \
+        --interactive \
+        --tty \
+        $DOCKER_CONTAINER_ID \
+        /bin/bash -xec "bash -x run-tests.sh"
     $ docker ps -a
     $ docker stop $DOCKER_CONTAINER_ID
-    $ docker rm -v $DOCKER_CONTAINER_ID
 
 Ubuntu Xenial:
 
     $ cd graylog-ansible-role
-    $ docker build -t graylog-ansible-role-xenial -f tests/support/xenial.Dockerfile tests/support
-    $ docker run -d --privileged -it -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v $PWD:/role:ro graylog-ansible-role-xenial /sbin/init
-    $ DOCKER_CONTAINER_ID=$(docker ps | grep xenial | awk '{print $1}')
+    $ docker build \
+        --tag graylog-ansible-role-xenial \
+        --file tests/support/xenial.Dockerfile \
+        tests/support
+    $ docker run \
+        --rm \
+        --detach \
+        --privileged \
+        --interactive \
+        --tty \
+        --volume /sys/fs/cgroup:/sys/fs/cgroup:ro \
+        --volume $PWD:/role:ro \
+        --name xenial \
+        graylog-ansible-role-xenial \
+        /lib/systemd/systemd
+    $ DOCKER_CONTAINER_ID=$(docker ps --filter name=xenial -q)
     $ docker logs $DOCKER_CONTAINER_ID
-    $ docker exec -it $DOCKER_CONTAINER_ID /bin/bash -xec "bash -x run-tests.sh"
+    $ docker exec \
+        --interactive \
+        --tty \
+        $DOCKER_CONTAINER_ID \
+        /bin/bash -xec "bash -x run-tests.sh"
     $ docker ps -a
     $ docker stop $DOCKER_CONTAINER_ID
     $ docker rm -v $DOCKER_CONTAINER_ID
