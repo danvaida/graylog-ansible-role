@@ -1,4 +1,4 @@
-FROM ubuntu:trusty
+FROM ubuntu:xenial
 
 RUN apt-get -y update
 RUN apt-get -y install ca-certificates \
@@ -9,8 +9,9 @@ RUN apt-get -y install ca-certificates \
                        python-pip \
                        python-dev \
                        libffi-dev \
-                       libssl-dev
+                       libssl-dev \
+                       systemd
 RUN pip install setuptools \
-                ansible==2.1.2
+                ansible
 
 COPY run-tests.sh run-tests.sh

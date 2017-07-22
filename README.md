@@ -253,11 +253,30 @@ Tests
 One can test the role on the supported distributions (see `meta/main.yml` for the complete list),
 by using the Docker images provided.
 
-Example for Debian Wheezy and Ubuntu Trusty:
+Example for Debian Wheezy, Stretch and Ubuntu Trusty:
 
     $ cd graylog-ansible-role
-    $ docker build -t graylog-ansible-role-wheezy -f tests/support/wheezy.Dockerfile tests/support
-    $ docker run -it -v $PWD:/role graylog-ansible-role-wheezy
+    $ docker build \
+        --tag graylog-ansible-role-wheezy \
+        --file tests/support/wheezy.Dockerfile \
+        tests/support
+    $ docker run \
+        --rm \
+        --detach \
+        --interactive \
+        --tty \
+        --volume $PWD:/role \
+        --name wheezy \
+        graylog-ansible-role-wheezy
+    $ DOCKER_CONTAINER_ID=$(docker ps --filter name=wheezy -q)
+    $ docker logs $DOCKER_CONTAINER_ID
+    $ docker exec \
+        --interactive \
+        --tty \
+        $DOCKER_CONTAINER_ID \
+        /bin/bash -xec "bash -x run-tests.sh"
+    $ docker ps -a
+    $ docker stop $DOCKER_CONTAINER_ID
 
 For Trusty, just replace `wheezy` with `trusty` in the above commands.
 
@@ -266,23 +285,56 @@ Example for CentOS 7 and Ubuntu Xenial:
 Due to how `systemd` works with Docker, the following approach is suggested:
 
     $ cd graylog-ansible-role
-    $ docker build -t graylog-ansible-role-centos7 -f tests/support/centos7.Dockerfile tests/support
-    $ docker run -d --privileged -it -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v $PWD:/role:ro graylog-ansible-role-centos7 /usr/sbin/init
-    $ DOCKER_CONTAINER_ID=$(docker ps | grep centos | awk '{print $1}')
+    $ docker build \
+        --tag graylog-ansible-role-centos7 \
+        --file tests/support/centos7.Dockerfile \
+        tests/support
+    $ docker run \
+        --rm \
+        --detach \
+        --privileged \
+        --interactive \
+        --tty \
+        --volume /sys/fs/cgroup:/sys/fs/cgroup:ro \
+        --volume $PWD:/role:ro \
+        --name centos \
+        graylog-ansible-role-centos7 \
+        /usr/sbin/init
+    $ DOCKER_CONTAINER_ID=$(docker ps --filter name=centos -q)
     $ docker logs $DOCKER_CONTAINER_ID
-    $ docker exec -it $DOCKER_CONTAINER_ID /bin/bash -xec "bash -x run-tests.sh"
+    $ docker exec \
+        --interactive \
+        --tty \
+        $DOCKER_CONTAINER_ID \
+        /bin/bash -xec "bash -x run-tests.sh"
     $ docker ps -a
     $ docker stop $DOCKER_CONTAINER_ID
-    $ docker rm -v $DOCKER_CONTAINER_ID
 
 Ubuntu Xenial:
 
     $ cd graylog-ansible-role
-    $ docker build -t graylog-ansible-role-xenial -f tests/support/xenial.Dockerfile tests/support
-    $ docker run -d --privileged -it -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v $PWD:/role:ro graylog-ansible-role-xenial /sbin/init
-    $ DOCKER_CONTAINER_ID=$(docker ps | grep xenial | awk '{print $1}')
+    $ docker build \
+        --tag graylog-ansible-role-xenial \
+        --file tests/support/xenial.Dockerfile \
+        tests/support
+    $ docker run \
+        --rm \
+        --detach \
+        --privileged \
+        --interactive \
+        --tty \
+        --volume /sys/fs/cgroup:/sys/fs/cgroup:ro \
+        --volume $PWD:/role:ro \
+        --name xenial \
+        graylog-ansible-role-xenial \
+        /lib/systemd/systemd
+    $ DOCKER_CONTAINER_ID=$(docker ps --filter name=xenial -q)
     $ docker logs $DOCKER_CONTAINER_ID
-    $ docker exec -it $DOCKER_CONTAINER_ID /bin/bash -xec "bash -x run-tests.sh"
+    $ docker exec \
+        --interactive \
+        --tty \
+        $DOCKER_CONTAINER_ID \
+        /bin/bash -xec "bash -x run-tests.sh"
     $ docker ps -a
     $ docker stop $DOCKER_CONTAINER_ID
     $ docker rm -v $DOCKER_CONTAINER_ID

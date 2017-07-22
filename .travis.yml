@@ -7,34 +7,28 @@ services:
   - docker
 
 env:
-  - distro: centos7_21
+  - distro: centos7
     init: /usr/sbin/init
     run_opts: "--privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro"
-  - distro: centos7_22
-    init: /usr/sbin/init
+  - distro: wheezy
+    init: ""
+    run_opts: ""
+  - distro: jessie
+    init: "/lib/systemd/systemd"
     run_opts: "--privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro"
-  - distro: wheezy_21
+  - distro: stretch
     init: ""
     run_opts: ""
-  - distro: wheezy_22
+  - distro: trusty
     init: ""
     run_opts: ""
-  - distro: trusty_21
-    init: ""
-    run_opts: ""
-  - distro: trusty_22
-    init: ""
-    run_opts: ""
-  - distro: xenial_21
-    init: /sbin/init
-    run_opts: "--privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro"
-  - distro: xenial_22
-    init: /sbin/init
+  - distro: xenial
+    init: /lib/systemd/systemd
     run_opts: "--privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro"
 
 before_script:
   - >
-    docker build -t graylog-ansible-role-${distro}
+    docker build --no-cache --pull -t graylog-ansible-role-${distro}
     -f tests/support/${distro}.Dockerfile tests/support
 
 script:

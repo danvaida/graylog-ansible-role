@@ -3,6 +3,7 @@
   apt:
     name: 'python-software-properties'
     state: present
+  when: ansible_distribution_release != 'stretch'
 
 - name: 'Repositories should be updated (Ubuntu)'
   apt_repository:
