@@ -13,6 +13,7 @@
     owner: graylog
     group: graylog
     mode: '0644'
+    backup: True
   notify: restart graylog-server
 
 - name: Graylog server defaults should be configured
@@ -22,6 +23,7 @@
     owner: graylog
     group: graylog
     mode: '0644'
+    backup: True
   notify: restart graylog-server
 
 - name: Graylog server should start after reboot

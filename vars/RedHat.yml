@@ -1,2 +1,7 @@
 ---
 graylog_server_defaults_file_path: '/etc/sysconfig/graylog-server'
+
+graylog_server_package:
+  "graylog-server{%if graylog_server_version is defined %}
+  -{{ graylog_server_version }}
+  {% endif %}"

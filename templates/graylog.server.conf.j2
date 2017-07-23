@@ -1,3 +1,4 @@
+{{ ansible_managed | comment }}
 ############################
 # GRAYLOG CONFIGURATION FILE
 ############################
@@ -80,17 +81,17 @@ plugin_dir = {{ graylog_plugin_dir }}
 # When using Graylog Collectors, this URI will be used to receive heartbeat messages and must be accessible for all collectors.
 rest_listen_uri = {{ graylog_rest_listen_uri }}
 
-# REST API transport address. Defaults to the value of graylog_rest_listen_uri. Exception: If graylog_rest_listen_uri
+# REST API transport address. Defaults to the value of rest_listen_uri. Exception: If rest_listen_uri
 # is set to a wildcard IP address (0.0.0.0) the first non-loopback IPv4 system address is used.
 # If set, this will be promoted in the cluster discovery APIs, so other nodes may try to connect on
-# this address and it is used to generate URLs addressing entities in the REST API. (see graylog_rest_listen_uri)
+# this address and it is used to generate URLs addressing entities in the REST API. (see rest_listen_uri)
 # You will need to define this, if your Graylog server is running behind a HTTP proxy that is rewriting
 # the scheme, host name or URI.
 # This must not contain a wildcard address (0.0.0.0).
 {% if graylog_rest_transport_uri %}
 rest_transport_uri = {{ graylog_rest_transport_uri }}
 {% else %}
-#rest_transport_uri = http://192.168.1.1:12900/
+#rest_transport_uri = http://192.168.1.1:9000/api/
 {% endif %}
 
 # Enable CORS headers for REST API. This is necessary for JS-clients accessing the server directly.
@@ -108,13 +109,25 @@ rest_enable_gzip = {{ graylog_rest_enable_gzip }}
 rest_enable_tls = {{ graylog_rest_enable_tls }}
 
 # The X.509 certificate chain file in PEM format to use for securing the REST API.
+{% if graylog_rest_tls_cert_file %}
 rest_tls_cert_file = {{ graylog_rest_tls_cert_file }}
+{% else %}
+#rest_tls_cert_file = /path/to/graylog.crt
+{% endif %}
 
 # The PKCS#8 private key file in PEM format to use for securing the REST API.
+{% if graylog_rest_tls_key_file %}
 rest_tls_key_file = {{ graylog_rest_tls_key_file }}
+{% else %}
+#rest_tls_key_file = /path/to/graylog.key
+{% endif %}
 
 # The password to unlock the private key used for securing the REST API.
+{% if graylog_rest_tls_key_password %}
 rest_tls_key_password = {{ graylog_rest_tls_key_password }}
+{% else %}
+#rest_tls_key_password = secret
+{% endif %}
 
 # The maximum size of the HTTP request headers in bytes.
 rest_max_header_size = {{ graylog_rest_max_header_size }}
@@ -181,9 +194,94 @@ web_max_initial_line_length = {{ graylog_web_max_initial_line_length }}
 # The size of the thread pool used exclusively for serving the web interface.
 web_thread_pool_size = {{ graylog_web_thread_pool_size }}
 
-# Configuration file for the embedded Elasticsearch instance in Graylog.
-# Pay attention to the working directory of the server, maybe use an absolute path here.
+# List of Elasticsearch hosts Graylog should connect to.
+# Need to be specified as a comma-separated list of valid URIs for the http ports of your elasticsearch nodes.
+# If one or more of your elasticsearch hosts require authentication, include the credentials in each node URI that
+# requires authentication.
+#
+# Default: http://127.0.0.1:9200
+elasticsearch_hosts = {{ graylog_elasticsearch_hosts }}
+
+# Maximum amount of time to wait for successfull connection to Elasticsearch HTTP port.
+#
+# Default: 10 Seconds
+{% if graylog_elasticsearch_connect_timeout %}
+elasticsearch_connect_timeout = {{ graylog_elasticsearch_connect_timeout }}
+{% else %}
+#elasticsearch_connect_timeout = 10s
+{% endif %}
+
+# Maximum amount of time to wait for reading back a response from an Elasticsearch server.
+#
+# Default: 60 seconds
+{% if graylog_elasticsearch_socket_timeout %}
+elasticsearch_socket_timeout = {{ graylog_elasticsearch_socket_timeout }}
+{% else %}
+#elasticsearch_socket_timeout = 60s
+{% endif %}
+
+# Maximum idle time for an Elasticsearch connection. If this is exceeded, this connection will
+# be tore down.
+#
+# Default: inf
+{% if graylog_elasticsearch_idle_timeout %}
+elasticsearch_idle_timeout = {{ graylog_elasticsearch_idle_timeout }}
+{% else %}
+#elasticsearch_idle_timeout = -1s
+{% endif %}
+
+# Maximum number of total connections to Elasticsearch.
+#
+# Default: 20
+elasticsearch_max_total_connections = {{ graylog_elasticsearch_max_total_connections }}
+
+# Maximum number of total connections per Elasticsearch route (normally this means per
+# elasticsearch server).
+#
+# Default: 2
+elasticsearch_max_total_connections_per_route = {{ graylog_elasticsearch_max_total_connections_per_route }}
+
+# Maximum number of times Graylog will retry failed requests to Elasticsearch.
+#
+# Default: 2
+elasticsearch_max_retries = {{ graylog_elasticsearch_max_retries }}
+
+# Enable automatic Elasticsearch node discovery through Nodes Info,
+# see https://www.elastic.co/guide/en/elasticsearch/reference/5.4/cluster-nodes-info.html
+#
+# WARNING: Automatic node discovery does not work if Elasticsearch requires authentication, e. g. with Shield.
+#
+# Default: false
+elasticsearch_discovery_enabled = {{ graylog_elasticsearch_discovery_enabled }}
+
+# Filter for including/excluding Elasticsearch nodes in discovery according to their custom attributes,
+# see https://www.elastic.co/guide/en/elasticsearch/reference/5.4/cluster.html#cluster-nodes
+#
 # Default: empty
+{% if graylog_elasticsearch_discovery_filter %}
+elasticsearch_discovery_filter = {{ graylog_elasticsearch_discovery_filter }}
+{% else %}
+#elasticsearch_discovery_filter = rack:42
+{% endif %}
+
+# Frequency of the Elasticsearch node discovery.
+#
+# Default: 30s
+{% if graylog_elasticsearch_discovery_frequency %}
+elasticsearch_discovery_frequency = {{ graylog_elasticsearch_discovery_frequency }}
+{% else %}
+# elasticsearch_discovery_frequency = 30s
+{% endif %}
+
+# Enable payload compression for Elasticsearch requests.
+#
+# Default: false
+{% if graylog_elasticsearch_compression_enabled %}
+elasticsearch_compression_enabled = {{ graylog_elasticsearch_compression_enabled }}
+{% else %}
+#elasticsearch_compression_enabled = true
+{% endif %}
+
 {% if graylog_elasticsearch_config_file %}
 elasticsearch_config_file = {{ graylog_elasticsearch_config_file }}
 {% endif %}
@@ -253,14 +351,22 @@ elasticsearch_max_number_of_indices = {{ graylog_elasticsearch_max_number_of_ind
 retention_strategy = {{ graylog_elasticsearch_retention_strategy }}
 
 # How many Elasticsearch shards and replicas should be used per index? Note that this only applies to newly created indices.
+# ATTENTION: These settings have been moved to the database in Graylog 2.2.0. When you upgrade, make sure to set these
+#            to your previous settings so they will be migrated to the database!
 elasticsearch_shards = {{ graylog_elasticsearch_shards }}
 elasticsearch_replicas = {{ graylog_elasticsearch_replicas }}
 
 # Prefix for all Elasticsearch indices and index aliases managed by Graylog.
+#
+# ATTENTION: These settings have been moved to the database in Graylog 2.2.0. When you upgrade, make sure to set these
+#            to your previous settings so they will be migrated to the database!
 elasticsearch_index_prefix = {{ graylog_elasticsearch_index_prefix }}
 
 # Name of the Elasticsearch index template used by Graylog to apply the mandatory index mapping.
-# # Default: graylog-internal
+# Default: graylog-internal
+#
+# ATTENTION: These settings have been moved to the database in Graylog 2.2.0. When you upgrade, make sure to set these
+#            to your previous settings so they will be migrated to the database!
 elasticsearch_template_name = {{ graylog_elasticsearch_template_name }}
 
 # Do you want to allow searches with leading wildcards? This can be extremely resource hungry and should only
@@ -271,62 +377,28 @@ allow_leading_wildcard_searches = {{ graylog_allow_leading_wildcard_searches }}
 # should only be enabled after making sure your Elasticsearch cluster has enough memory.
 allow_highlighting = {{ graylog_allow_highlighting }}
 
-# settings to be passed to elasticsearch's client (overriding those in the provided elasticsearch_config_file)
-# all these
-# this must be the same as for your Elasticsearch cluster
-elasticsearch_cluster_name = {{ graylog_elasticsearch_cluster_name }}
-
-# The prefix being used to generate the Elasticsearch node name which makes it easier to identify the specific Graylog
-# server running the embedded Elasticsearch instance. The node name will be constructed by concatenating this prefix
-# and the Graylog node ID (see node_id_file), for example "graylog-17052010-1234-5678-abcd-1337cafebabe".
-# Default: graylog-
-elasticsearch_node_name_prefix = {{ graylog_elasticsearch_node_name_prefix }}
-
-# A comma-separated list of Elasticsearch nodes which Graylog is using to connect to the Elasticsearch cluster,
-# see https://www.elastic.co/guide/en/elasticsearch/reference/2.3/modules-discovery-zen.html for details.
-# Default: 127.0.0.1
-elasticsearch_discovery_zen_ping_unicast_hosts = {{ graylog_elasticsearch_discovery_zen_ping_unicast_hosts }}
-
-# Use multiple Elasticsearch nodes as seed
-#elasticsearch_discovery_zen_ping_unicast_hosts = 198.51.100.23:9300, 198.51.100.42:9300
-
-# we don't want the Graylog server to store any data, or be master node
-elasticsearch_node_master = false
-elasticsearch_node_data = false
-
-# use a different port if you run multiple Elasticsearch nodes on one machine
-elasticsearch_transport_tcp_port = {{ graylog_elasticsearch_transport_tcp_port }}
-
-# we don't need to run the embedded HTTP server here
-elasticsearch_http_enabled = {{ graylog_elasticsearch_http_enabled }}
-
-# Change the following setting if you are running into problems with timeouts during Elasticsearch cluster discovery.
-# The setting is specified in milliseconds, the default is 5000ms (5 seconds).
-elasticsearch_cluster_discovery_timeout = {{ graylog_elasticsearch_cluster_discovery_timeout }}
-
-# the following settings allow to change the bind addresses for the Elasticsearch client in Graylog
-# these settings are empty by default, letting Elasticsearch choose automatically,
-# override them here or in the 'elasticsearch_config_file' if you need to bind to a special address
-# refer to https://www.elastic.co/guide/en/elasticsearch/reference/2.3/modules-network.html
-# for special values here
-elasticsearch_network_host = {{ graylog_elasticsearch_network_host }}
-elasticsearch_network_bind_host = {{ graylog_elasticsearch_network_bind_host }}
-elasticsearch_network_publish_host = {{ graylog_elasticsearch_network_publish_host }}
-
-# The total amount of time discovery will look for other Elasticsearch nodes in the cluster
-# before giving up and declaring the current node master.
-elasticsearch_discovery_initial_state_timeout = {{ graylog_elasticsearch_discovery_initial_state_timeout }}
-
 # Analyzer (tokenizer) to use for message and full_message field. The "standard" filter usually is a good idea.
 # All supported analyzers are: standard, simple, whitespace, stop, keyword, pattern, language, snowball, custom
 # Elasticsearch documentation: https://www.elastic.co/guide/en/elasticsearch/reference/2.3/analysis.html
 # Note that this setting only takes effect on newly created indices.
+#
+# ATTENTION: These settings have been moved to the database in Graylog 2.2.0. When you upgrade, make sure to set these
+#            to your previous settings so they will be migrated to the database!
 elasticsearch_analyzer = {{ graylog_elasticsearch_analyzer }}
 
 # Global request timeout for Elasticsearch requests (e. g. during search, index creation, or index time-range
 # calculations) based on a best-effort to restrict the runtime of Elasticsearch operations.
 # Default: 1m
 elasticsearch_request_timeout = {{ graylog_elasticsearch_request_timeout }}
+
+# Global timeout for index optimization (force merge) requests.
+# Default: 1h
+elasticsearch_index_optimization_timeout = {{ graylog_elasticsearch_index_optimization_timeout }}
+
+# Maximum number of concurrently running index optimization (force merge) jobs.
+# If you are using lots of different index sets, you might want to increase that number.
+# Default: 20
+elasticsearch_index_optimization_jobs = {{ graylog_elasticsearch_index_optimization_jobs }}
 
 # Time interval for index range information cleanups. This setting defines how often stale index range information
 # is being purged from the database.
@@ -401,6 +473,7 @@ message_journal_dir = {{ graylog_message_journal_dir }}
 # During normal operation the journal will be smaller.
 message_journal_max_age = {{ graylog_message_journal_max_age }}
 message_journal_max_size = {{ graylog_message_journal_max_size }}
+
 message_journal_flush_age = {{ graylog_message_journal_flush_age }}
 message_journal_flush_interval = {{ graylog_message_journal_flush_interval }}
 message_journal_segment_age = {{ graylog_message_journal_segment_age }}
@@ -429,31 +502,50 @@ stream_processing_max_faults = {{ graylog_stream_processing_max_faults }}
 
 # Length of the interval in seconds in which the alert conditions for all streams should be checked
 # and alarms are being sent.
+{% if graylog_alert_check_interval %}
 alert_check_interval = {{ graylog_alert_check_interval }}
+{% else %}
+#alert_check_interval = 60
+{% endif %}
 
 # Since 0.21 the Graylog server supports pluggable output modules. This means a single message can be written to multiple
 # outputs. The next setting defines the timeout for a single output module, including the default output module where all
 # messages end up.
 #
 # Time in milliseconds to wait for all message outputs to finish writing a single message.
+{% if graylog_output_module_timeout %}
 output_module_timeout = {{ graylog_output_module_timeout }}
+{% else %}
+#output_module_timeout = 10000
+{% endif %}
 
 # Time in milliseconds after which a detected stale master node is being rechecked on startup.
+{% if graylog_stale_master_timeout %}
 stale_master_timeout = {{ graylog_stale_master_timeout }}
+{% else %}
+#stale_master_timeout = 2000
+{% endif %}
 
 # Time in milliseconds which Graylog is waiting for all threads to stop on shutdown.
+{% if graylog_shutdown_timeout %}
 shutdown_timeout = {{ graylog_shutdown_timeout }}
+{% else %}
+#shutdown_timeout = 30000
+{% endif %}
 
 # MongoDB connection string
 # See https://docs.mongodb.com/manual/reference/connection-string/ for details
-# mongodb_uri = mongodb://localhost/graylog
+{% if graylog_mongodb_uri %}
+mongodb_uri = {{ graylog_mongodb_uri }}
+{% else %}
+mongodb_uri = mongodb://localhost/graylog
+{% endif %}
 
 # Authenticate against the MongoDB server
 #mongodb_uri = mongodb://grayloguser:secret@localhost:27017/graylog
 
 # Use a replica set instead of a single host
 #mongodb_uri = mongodb://grayloguser:secret@localhost:27017,localhost:27018,localhost:27019/graylog
-mongodb_uri = {{ graylog_mongodb_uri }}
 
 # Increase this value according to the maximum connections your MongoDB server can handle from a single client
 # if you encounter MongoDB connection problems.
@@ -467,7 +559,11 @@ mongodb_threads_allowed_to_block_multiplier = {{ graylog_mongodb_threads_allowed
 
 # Drools Rule File (Use to rewrite incoming log messages)
 # See: http://docs.graylog.org/en/2.1/pages/drools.html
+{% if graylog_rules_file %}
 rules_file = {{ graylog_rules_file }}
+{% else %}
+#rules_file = /etc/graylog/server/rules.drl
+{% endif %}
 
 # Email transport
 transport_email_enabled = {{ graylog_transport_email_enabled }}
@@ -483,47 +579,89 @@ transport_email_from_email = {{ graylog_transport_email_from_email }}
 
 # Specify and uncomment this if you want to include links to the stream in your stream alert mails.
 # This should define the fully qualified base url to your web interface exactly the same way as it is accessed by your users.
+{% if graylog_transport_email_web_interface_url %}
 transport_email_web_interface_url = {{ graylog_transport_email_web_interface_url }}
+{% else %}
+#transport_email_web_interface_url = https://graylog.example.com
+{% endif %}
 
 # The default connect timeout for outgoing HTTP connections.
 # Values must be a positive duration (and between 1 and 2147483647 when converted to milliseconds).
 # Default: 5s
+{% if graylog_http_connect_timeout %}
 http_connect_timeout = {{ graylog_http_connect_timeout }}
+{% else %}
+#http_connect_timeout = 5s
+{% endif %}
 
 # The default read timeout for outgoing HTTP connections.
 # Values must be a positive duration (and between 1 and 2147483647 when converted to milliseconds).
 # Default: 10s
+{% if graylog_http_read_timeout %}
 http_read_timeout = {{ graylog_http_read_timeout }}
+{% else %}
+#http_read_timeout = 10s
+{% endif %}
 
 # The default write timeout for outgoing HTTP connections.
 # Values must be a positive duration (and between 1 and 2147483647 when converted to milliseconds).
 # Default: 10s
+{% if graylog_http_write_timeout %}
 http_write_timeout = {{ graylog_http_write_timeout }}
+{% else %}
+#http_write_timeout = 10s
+{% endif %}
 
 # HTTP proxy for outgoing HTTP connections
-# http_proxy_uri = {{ graylog_http_proxy_uri }}
+{% if graylog_http_proxy_uri %}
+http_proxy_uri = {{ graylog_http_proxy_uri }}
+{% else %}
+#http_proxy_uri =
+{% endif %}
 
 # Disable the optimization of Elasticsearch indices after index cycling. This may take some load from Elasticsearch
 # on heavily used systems with large indices, but it will decrease search performance. The default is to optimize
 # cycled indices.
+#
+# ATTENTION: These settings have been moved to the database in Graylog 2.2.0. When you upgrade, make sure to set these
+#            to your previous settings so they will be migrated to the database!
 disable_index_optimization = {{ graylog_disable_index_optimization }}
 
 # Optimize the index down to <= index_optimization_max_num_segments. A higher number may take some load from Elasticsearch
 # on heavily used systems with large indices, but it will decrease search performance. The default is 1.
+#
+# ATTENTION: These settings have been moved to the database in Graylog 2.2.0. When you upgrade, make sure to set these
+#            to your previous settings so they will be migrated to the database!
+{% if graylog_index_optimization_max_num_segments %}
 index_optimization_max_num_segments = {{ graylog_index_optimization_max_num_segments }}
+{% else %}
+#index_optimization_max_num_segments = 1
+{% endif %}
 
 # The threshold of the garbage collection runs. If GC runs take longer than this threshold, a system notification
 # will be generated to warn the administrator about possible problems with the system. Default is 1 second.
+{% if graylog_gc_warning_threshold %}
 gc_warning_threshold = {{ graylog_gc_warning_threshold }}
+{% else %}
+#gc_warning_threshold = 1s
+{% endif %}
 
 # Connection timeout for a configured LDAP server (e. g. ActiveDirectory) in milliseconds.
+{% if graylog_ldap_connection_timeout %}
 ldap_connection_timeout = {{ graylog_ldap_connection_timeout }}
+{% else %}
+#ldap_connection_timeout = 2000
+{% endif %}
 
 # Disable the use of SIGAR for collecting system stats
 disable_sigar = {{ graylog_disable_sigar }}
 
 # The default cache time for dashboard widgets. (Default: 10 seconds, minimum: 1 second)
+{% if graylog_dashboard_widget_default_cache_time %}
 dashboard_widget_default_cache_time = {{ graylog_dashboard_widget_default_cache_time }}
+{% else %}
+#dashboard_widget_default_cache_time = 10s
+{% endif %}
 
 # Automatically load content packs in "content_packs_dir" on the first start of Graylog.
 content_packs_loader_enabled = {{ graylog_content_packs_loader_enabled }}
