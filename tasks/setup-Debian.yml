@@ -71,6 +71,6 @@
 
 - name: Graylog server package should be installed
   apt:
-    name: "graylog-server{{ graylog_server_version is defined | ternary('=' + graylog_version, '') }}"
+    name: "{{ graylog_server_package }}"
     state: present
   notify: restart graylog-server
