@@ -6,11 +6,15 @@ RUN apt-get -y install ca-certificates \
                        gcc \
                        openssh-client \
                        openssl \
-                       python-pip \
                        python-dev \
                        libffi-dev \
-                       libssl-dev
-RUN pip install setuptools \
-                ansible==2.3
+                       libssl-dev \
+                       wget
+RUN wget https://bootstrap.pypa.io/get-pip.py \
+    && python get-pip.py \
+    && rm get-pip.py \
+    && pip install \
+        setuptools \
+        ansible==2.3
 
 COPY run-tests.sh run-tests.sh
