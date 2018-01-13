@@ -244,12 +244,12 @@ Tests
 One can test the role on the supported distributions (see `meta/main.yml` for the complete list),
 by using the Docker images provided.
 
-Example for Debian Wheezy, Stretch and Ubuntu Trusty:
+Example for Debian Stretch:
 
     $ cd graylog-ansible-role
     $ docker build \
-        --tag graylog-ansible-role-wheezy \
-        --file tests/support/wheezy.Dockerfile \
+        --tag graylog-ansible-role-stretch \
+        --file tests/support/stretch.Dockerfile \
         tests/support
     $ docker run \
         --rm \
@@ -257,9 +257,9 @@ Example for Debian Wheezy, Stretch and Ubuntu Trusty:
         --interactive \
         --tty \
         --volume $PWD:/role \
-        --name wheezy \
-        graylog-ansible-role-wheezy
-    $ DOCKER_CONTAINER_ID=$(docker ps --filter name=wheezy -q)
+        --name stretch \
+        graylog-ansible-role-stretch
+    $ DOCKER_CONTAINER_ID=$(docker ps --filter name=stretch -q)
     $ docker logs $DOCKER_CONTAINER_ID
     $ docker exec \
         --interactive \
@@ -268,8 +268,6 @@ Example for Debian Wheezy, Stretch and Ubuntu Trusty:
         /bin/bash -xec "bash -x run-tests.sh"
     $ docker ps -a
     $ docker stop $DOCKER_CONTAINER_ID
-
-For Trusty, just replace `wheezy` with `trusty` in the above commands.
 
 Example for CentOS 7 and Ubuntu Xenial:
 

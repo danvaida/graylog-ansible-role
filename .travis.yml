@@ -10,16 +10,10 @@ env:
   - distro: centos7
     init: /usr/sbin/init
     run_opts: "--privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro"
-  - distro: wheezy
-    init: ""
-    run_opts: ""
   - distro: jessie
     init: "/lib/systemd/systemd"
     run_opts: "--privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro"
   - distro: stretch
-    init: ""
-    run_opts: ""
-  - distro: trusty
     init: ""
     run_opts: ""
   - distro: xenial
